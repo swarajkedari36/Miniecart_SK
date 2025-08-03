@@ -4,4 +4,4 @@ services:
     env: docker
     plan: free
     autoDeploy: true
-    repo: https://github.com/swarajkedari36/mini-ecommerce-cart-SK
+    repo: https://github.com/swarajkedari36/Miniecart_SK
