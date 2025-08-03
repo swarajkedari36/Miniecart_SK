@@ -1,28 +1,35 @@
 FROM php:8.2-apache
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    zip unzip curl git libzip-dev libpng-dev libonig-dev libxml2-dev \
-    && docker-php-ext-install pdo pdo_mysql zip gd
-
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Enable Apache mod_rewrite
+RUN a2enmod rewrite
 
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy project files
-COPY . .
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    zip unzip curl libzip-dev libonig-dev libxml2-dev sqlite3 libsqlite3-dev \
+    && docker-php-ext-install pdo pdo_sqlite
 
-# Install PHP dependencies
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Copy Laravel files
+COPY . /var/www/html
+
+# Set document root to public/
+RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|' /etc/apache2/sites-available/000-default.conf
+
+# Install Laravel PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Set permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+# Set Laravel permissions
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Expose port 80
+# Laravel artisan setup
+RUN php artisan key:generate \
+    && php artisan config:cache \
+    && php artisan route:cache
+
 EXPOSE 80
-RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
-
-# Start Apache
-CMD ["apache2-foreground"]
