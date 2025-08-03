@@ -27,9 +27,11 @@ RUN composer install --no-dev --optimize-autoloader
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Laravel artisan setup
-RUN php artisan key:generate \
-    && php artisan config:cache \
-    && php artisan route:cache
+# Copy and set startup script
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
+CMD ["/start.sh"]
+
 
 EXPOSE 80
