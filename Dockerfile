@@ -20,18 +20,20 @@ COPY . /var/www/html
 # Set document root to public/
 RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|' /etc/apache2/sites-available/000-default.conf
 
-# Install Laravel PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
+# Install PHP dependencies
+RUN composer install --no-dev --optimize-autoloader || true
 
-# Set Laravel permissions
+# Set permissions
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Copy and set startup script
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
-
-CMD ["/start.sh"]
-
+# Run artisan only if env + vendor are available
+RUN if [ -f ".env" ] && [ -d "vendor" ]; then \
+      php artisan config:cache && \
+      php artisan route:cache && \
+      php artisan view:cache; \
+    else \
+      echo "Skipping artisan because .env or vendor folder is missing"; \
+    fi
 
 EXPOSE 80
