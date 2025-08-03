@@ -28,8 +28,8 @@ RUN mkdir -p database && touch database/database.sqlite
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache
-
+    && chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache \
+    && touch /var/www/html/database/database.sqlite
 # Run Laravel optimizations & migrations
 RUN php artisan config:cache \
     && php artisan route:cache \
